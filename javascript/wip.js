@@ -69,8 +69,6 @@ function highlightColumnsWithWip() {
     });
 }
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.action === "update") highlightColumnsWithWip();
+chrome.runtime.onMessage.addListener(function (request) {
+    if (request.action === "update") return highlightColumnsWithWip();
 });
-
-highlightColumnsWithWip();

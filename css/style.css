@@ -1,0 +1,9 @@
+span.card-short-id.hide {
+    display: inline-block !important;
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+p.list-header-num-cards.hide {
+    display: block !important;
+}

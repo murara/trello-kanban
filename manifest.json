@@ -1,0 +1,37 @@
+{
+  "name": "Trello Kanban",
+  "version": "1.0",
+  "description": "Add card number, list cards counter and wip limit",
+  "manifest_version": 2,
+  "permissions": [
+    "webRequest",
+    "tabs",
+    "https://trello.com/"
+  ],
+  "background": {
+    "scripts": [
+      "javascript/background.js"
+    ],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://trello.com/*"
+      ],
+      "run_at": "document_idle",
+      "css": [
+        "css/style.css"
+      ],
+      "js": [
+        "javascript/wip.js"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "images/icon16.png",
+    "32": "images/icon32.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
+}

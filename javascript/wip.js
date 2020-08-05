@@ -1,4 +1,4 @@
-const wipRegex = /\[(\d)?-?(\d)\]/g;
+const wipRegex = /\[(?:(\d+)-)?(\d+)\]/s;
 
 function findColumns() {
     return Array.from(document.querySelectorAll('div.list'));
@@ -69,6 +69,22 @@ function highlightColumnsWithWip() {
     });
 }
 
+let validateLoadingCount = 0;
+
+function waitLoading(resolve) {
+    const pluginButtons = document.querySelector(".board-header-plugin-btns");
+    if (pluginButtons && pluginButtons.children.length > 0) {
+        resolve();
+        return;
+    }
+
+    if (validateLoadingCount > 60) return;
+
+    validateLoadingCount++;
+    setTimeout(function() { waitLoading(resolve) }, 500);
+}
+
 chrome.runtime.onMessage.addListener(function (request) {
+    if (request.action === "start") return new Promise(waitLoading).then(highlightColumnsWithWip);
     if (request.action === "update") return highlightColumnsWithWip();
 });

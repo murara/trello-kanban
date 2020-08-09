@@ -1,26 +1,26 @@
 const wipRegex = /\[(?:(\d+)-)?(\d+)\]/s;
 
-function findColumns() {
+function findLists() {
     return Array.from(document.querySelectorAll('div.list'));
 }
 
-function countColumnCards(column) {
-    return column.querySelectorAll('a.list-card').length;
+function countListCards(list) {
+    return list.querySelectorAll('a.list-card').length;
 }
 
-function getColumnTitle(column) {
-    return column.querySelector('.list-header h2.list-header-name-assist').innerText;
+function getListTitle(list) {
+    return list.querySelector('.list-header h2.list-header-name-assist').innerText;
 }
 
-function buildColumnMetada(column) {
-    const title = getColumnTitle(column);
+function buildListMetada(list) {
+    const title = getListTitle(list);
     const wipSearchResult = wipRegex.exec(title);
 
     if (!wipSearchResult) return false;
 
     return {
-        element: column,
-        count: countColumnCards(column),
+        element: list,
+        count: countListCards(list),
         wip: {
             min: parseInt(wipSearchResult[1]),
             max: parseInt(wipSearchResult[2])
@@ -28,44 +28,44 @@ function buildColumnMetada(column) {
     };
 }
 
-function getColumnsMetadata() {
-    const columns = findColumns();
-    return columns.reduce(function (filteredColumns, currentColumn) {
-        const columnMetadata = buildColumnMetada(currentColumn);
+function getListsMetadata() {
+    const lists = findLists();
+    return lists.reduce(function (filteredLists, currentList) {
+        const listMetadata = buildListMetada(currentList);
 
-        if (columnMetadata) filteredColumns.push(columnMetadata);
+        if (listMetadata) filteredLists.push(listMetadata);
 
-        return filteredColumns;
+        return filteredLists;
     }, []);
 }
 
-function highlightColumnWithYellow(column) {
-    column.style.backgroundColor = 'yellow';
+function highlightListWithYellow(list) {
+    list.style.backgroundColor = 'yellow';
 }
 
-function highlightColumnWithRed(column) {
-    column.style.backgroundColor = 'red';
+function highlightListWithRed(list) {
+    list.style.backgroundColor = 'red';
 }
 
-function revertHighlightColumn(column) {
-    column.style.backgroundColor = '';
+function revertHighlightList(list) {
+    list.style.backgroundColor = '';
 }
 
-function highlightColumn(column, count, limit) {
-    if (count === limit) highlightColumnWithYellow(column)
-    else highlightColumnWithRed(column)
+function highlightList(list, count, limit) {
+    if (count === limit) highlightListWithYellow(list)
+    else highlightListWithRed(list)
 }
 
-function highlightColumnsWithWip() {
-    const columns = getColumnsMetadata();
+function highlightListsWithWip() {
+    const lists = getListsMetadata();
 
-    columns.forEach(function (column) {
-        const { element, count, wip } = column;
+    lists.forEach(function (list) {
+        const { element, count, wip } = list;
 
-        if (!isNaN(wip.min) && count <= wip.min) return highlightColumn(element, count, wip.min);
-        if (!isNaN(wip.max) && count >= wip.max) return highlightColumn(element, count, wip.max);
+        if (!isNaN(wip.min) && count <= wip.min) return highlightList(element, count, wip.min);
+        if (!isNaN(wip.max) && count >= wip.max) return highlightList(element, count, wip.max);
 
-        revertHighlightColumn(element);
+        revertHighlightList(element);
     });
 }
 
@@ -85,6 +85,6 @@ function waitLoading(resolve) {
 }
 
 chrome.runtime.onMessage.addListener(function (request) {
-    if (request.action === "start") return new Promise(waitLoading).then(highlightColumnsWithWip);
-    if (request.action === "update") return highlightColumnsWithWip();
+    if (request.action === "start") return new Promise(waitLoading).then(highlightListsWithWip);
+    if (request.action === "update") return highlightListsWithWip();
 });

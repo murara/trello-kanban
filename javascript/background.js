@@ -1,23 +1,13 @@
-function startWip(tabId) {
-    chrome.tabs.sendMessage(tabId, { action: "start" });
-}
-
-function updateWip(tabId) {
-    chrome.tabs.sendMessage(tabId, { action: "update" });
+function initializeWip(tabId) {
+    chrome.tabs.sendMessage(tabId, { action: "initialize" });
 }
 
 (function () {
-    chrome.webNavigation.onCompleted.addListener((details) => {
-        if (details.url.startsWith("https://trello.com/b/")) startWip(details.tabId);
-    });
-
     chrome.webRequest.onCompleted.addListener((details) => {
-        updateWip(details.tabId);
+        initializeWip(details.tabId);
     }, {
         urls: [
-            "https://trello.com/*/lists/*",
-            "https://trello.com/*/lists",
-            "https://trello.com/*/card/*"
+            "https://trello.com/1/boards/*/markAsViewed",
         ]
     });
 }());

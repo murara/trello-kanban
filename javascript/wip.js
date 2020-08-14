@@ -1,10 +1,14 @@
 const wipRegex = /\[(?:(\d+)-)?(\d+)\]/s;
 
-function findLists() {
+function findAllLists() {
     return Array.from(document.querySelectorAll('div.list'));
 }
 
-function countListCards(list) {
+function getListCards(list) {
+    return list.querySelector('div.list-cards');
+}
+
+function countCards(list) {
     return list.querySelectorAll('a.list-card').length;
 }
 
@@ -20,23 +24,12 @@ function buildListMetada(list) {
 
     return {
         element: list,
-        count: countListCards(list),
+        count: countCards(list),
         wip: {
             min: parseInt(wipSearchResult[1]),
             max: parseInt(wipSearchResult[2])
         }
     };
-}
-
-function getListsMetadata() {
-    const lists = findLists();
-    return lists.reduce(function (filteredLists, currentList) {
-        const listMetadata = buildListMetada(currentList);
-
-        if (listMetadata) filteredLists.push(listMetadata);
-
-        return filteredLists;
-    }, []);
 }
 
 function highlightListWithYellow(list) {
@@ -56,20 +49,38 @@ function highlightList(list, count, limit) {
     else highlightListWithRed(list)
 }
 
-function highlightListsWithWip() {
-    const lists = getListsMetadata();
+const observer = new MutationObserver(function callback(mutations) {
+    mutations.forEach(function each({ target }) {
+        updateElementList(target.parentElement);
+    });    
+});
 
+function updateElementList(target) {
+    const list = buildListMetada(target);
+    if (!list) return;
+
+    const { element, count, wip } = list;
+
+    if (!isNaN(wip.min) && count <= wip.min) return highlightList(element, count, wip.min);
+    if (!isNaN(wip.max) && count >= wip.max) return highlightList(element, count, wip.max);
+
+    revertHighlightList(element);
+}
+
+function initLists(lists) {
     lists.forEach(function (list) {
-        const { element, count, wip } = list;
-
-        if (!isNaN(wip.min) && count <= wip.min) return highlightList(element, count, wip.min);
-        if (!isNaN(wip.max) && count >= wip.max) return highlightList(element, count, wip.max);
-
-        revertHighlightList(element);
+        observer.observe(getListCards(list), { childList: true });
+        updateElementList(list);
     });
 }
 
+function init() {
+    const lists = findAllLists();
+    initLists(lists);
+}
+
 let validateLoadingCount = 0;
+let initializing = false;
 
 function waitLoading(resolve) {
     const pluginButtons = document.querySelector(".board-header-plugin-btns");
@@ -85,6 +96,12 @@ function waitLoading(resolve) {
 }
 
 chrome.runtime.onMessage.addListener(function (request) {
-    if (request.action === "start") return new Promise(waitLoading).then(highlightListsWithWip);
-    if (request.action === "update") return highlightListsWithWip();
+    if (request.action === "initialize") {
+        if (initializing) return;
+
+        observer.disconnect();
+
+        initializing = true;
+        return new Promise(waitLoading).then(init).then(()=>{ initializing = false; });
+    }
 });
